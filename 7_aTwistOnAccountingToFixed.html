@@ -1,0 +1,45 @@
+<script src="simpletest.js"></script>
+<script>
+  /*
+
+  Purpose:
+  An improvement on rounding for floating point numbers in JavaScript.
+
+  It treats floats more like decimal values than binary.
+  It fixes inconsistent precision rounding in JavaScript.
+  This inconsistent rounding is evident when dealing with .05 values.
+  Some of these values round up, while others round down.
+
+  Example:
+  (0.615).toFixed(2); // "0.61"
+  betterToFixed(0.615, 2); // "0.62"
+
+  Function signature:
+  betterToFixed(value, precision)
+
+  Arguments:
+  value - The number to be rounded.
+  precision - The number of decimal places present in the rounded solution.
+
+  Return value:
+  A string that contains the rounded number.
+
+  Requirements:
+
+  Questions:
+  1) Should the function accept a value or a precision argument that is a string?
+
+  */
+
+  // Function Syntax:
+  function betterToFixed(value, precision) {}
+
+  tests({
+    "1) First test.": function () {
+      fail();
+    },
+    "2) Second test.": function () {
+      fail();
+    }
+  });
+</script>
