@@ -71,20 +71,20 @@
       numberOfDecimals = length - positionOfDecimal - 1;
     }
 
-    // No calculations necessary:
-    if(numberOfDecimals === precision){
-      return string;
-    }
-
-    // Add requested 0's to end of number:
-    if(numberOfDecimals < precision){
+    // Add 0's to end of number:
+    if (numberOfDecimals < precision) {
       var number = Number(string);
       return number.toFixed(precision);
     }
 
+    // Do not add or remove decimal places from number:
+    if(numberOfDecimals === precision){
+      return string;
+    }
+
     var numberToRound = Number(string);
 
-    // Reformat number so it can be rounded to nearest whole number:
+    // Move decimal up:
     if(numberOfDecimals > 1){
       var beforeDecimal = string.slice(0, positionOfDecimal) + string.slice(positionOfDecimal + 1, length - 1);
       var afterDecimal = string.slice(length - 1);
@@ -95,18 +95,17 @@
     var roundedNumber = Math.round(numberToRound);
     var roundedResult = roundedNumber;
 
-    // If number was reformtted for rounded, move decimal back:
+    // Move decimal back:
     if(numberOfDecimals > 1){
       var positionsToMove = length - positionOfDecimal - 2;
       roundedResult = roundedNumber / Math.pow(10,positionsToMove);
     }
 
-    // Converts number to string and add decimals where necessary
+    // Convert number to string and format where necessary
     var result = roundedResult.toFixed(precision);
     return result;
   }
 
-  // TODO: Add test for negative number
   tests({
     // If no calculations, make sure it handles the value properly:
     "1) If number of decimals in value === precision, it should return String(value).": function () {
@@ -114,7 +113,7 @@
       eq(betterToFixed(1.5, 1), "1.5");
       eq(betterToFixed(1.55, 2), "1.55");
     },
-    // If no calculations, make sure it formats string properly
+    // If no rounding, make sure it formats string properly
     "2) If number of decimals in value < precision, it should return the String(number) with precision number of decimal places.": function () {
       eq(betterToFixed(1, 1), "1.0");
       eq(betterToFixed(1.5, 2), "1.50");
@@ -122,39 +121,36 @@
       eq(betterToFixed(1.55, 3), "1.550");
       eq(betterToFixed(1.55, 4), "1.5500");
     },
-    // If calculations && numberOfDecimals <=1, rounding is not an issue:
+    // If rounding && but calculations && numberOfDecimals <=1, rounding is not an issue:
     "3) If precision < numberOfDecimals && numberOfDecimals <= 1, it should return a rounded number with precision number of decimal places.": function () {
       eq(betterToFixed(1, 0), "1");
       eq(betterToFixed(1.5, 0), "2");
     },
-    // If calculations && numberOfDecimals > 1, rounding is an issue:
+    // If rounding && calculations && numberOfDecimals > 1, rounding is an issue:
     "4) If precision < numberOfDecimals && numberOfDecimals > 1, it should return a rounded number with precision number of decimal places.": function () {
-      // Move decimal one spot
       eq(betterToFixed(1.45, 1), "1.5");
       eq(betterToFixed(1.455, 2), "1.46");
-      // Move decimal more than one spot
       eq(betterToFixed(1.455, 1), "1.5");
+      eq(betterToFixed(1.4555, 2), "1.46");
     },
-    // Check types
-    "5) If either precision or value is a string, it should still round value to precision number of decimal places.": function () {
-      fail();
-      // var formattedNumber = betterToFixed("1.46", "2");
-      // eq(formattedNumber, "1.456");
+    "5) If value is negative it should round value down as expected when dealing with Math.round().": function () {
+      eq(betterToFixed(-1.5, 0), "-1");
+      eq(betterToFixed(-1.45, 1), "-1.4");
+      eq(betterToFixed(-1.455, 2), "-1.45");
+      eq(betterToFixed(-1.4550, 2), "-1.45");
+      eq(betterToFixed(-1.4551, 2), "-1.46");
+    },
+    "6) If precision or value is a string, it should still round value to precision number of decimal places.": function () {
+      eq(betterToFixed("1.456", "2"), "1.46");
     },
     // Make sure it handles strange numbers
-    "6) If value cannot be accurately stored by JavaScript, it still round as expected.": function () {
-      fail();
-      // var firstFormattedNumber = betterToFixed(0.615, 2);
-      // eq(firstFormattedNumber, "0.62");
-
-      // var secondFormattedNumber = betterToFixed(1.005, 2);
-      // eq(secondFormattedNumber, "1.01");
-
-      // var thirdFormattedNumber = betterToFixed(10.235, 2);
-      // eq(thirdFormattedNumber, "10.24");
+    "7) If value cannot be accurately stored by JavaScript, it still round as expected.": function () {
+      eq(betterToFixed(0.615, 2), "0.62");
+      eq(betterToFixed(1.005, 2), "1.01");
+      eq(betterToFixed(10.235, 2), "10.24");
     },
     // Keep consistent with toFixed()
-    "7) If precision < 0, it should throw a Range Error.": function () {
+    "8) If precision < 0, it should throw a Range Error.": function () {
       fail();
       // try{
       //   betterToFixed(15, -1);
