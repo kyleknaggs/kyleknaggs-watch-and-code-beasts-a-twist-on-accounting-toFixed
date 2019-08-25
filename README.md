@@ -1,44 +1,22 @@
-Watch and Code Beasts - isPrototypeOf
+Watch and Code Beasts - A twist on accounting.toFixed
 =======================================
 
-In AccountingJS 8 and 9, you learned about JavaScript's prototype system. This challenge builds on those videos.
+In AccountingJS 13, we looked at accounting.toFixed method.
+We found that we could improve the function by simulating calculations like 1.005 * 100 with 1.005e2 (using exponential notation).
 
-Write a function, isPrototypeOf, that works just like Object.prototype.isPrototypeOf. Since your solution will be called as a function rather than a method, the way you use it will be slightly different, but the outcome should be the same.
+Your job is to rewrite accounting.toFixed so that it does NOT use multiplication or exponential notation.
+Instead, you will actually move the decimal point using string manipulation.
 
-Obviously, don't use Object.prototype.isPrototypeOf in your solution, but feel free to use other methods on Object.prototype.
+So in the example above, instead of using 1.005e2, you'll need to figure out a way to work with the string "1.005" and then create a new string with the decimal point moved over two places to the right.
+In other words, you need to turn "1.005" into "100.5" using string manipulation.
 
-```
-var canine = {
-  bark: function() {
-    console.log('bark');
-  }
-};
+Include tests that cover the weird cases we saw in the video like 0.615, 10.235, and 1.005.
 
-var dog = Object.create(canine);
-dog.fetch = function() {
-  console.log('fetch');
-};
+This is more of a fun exercise than a practical solution since exponential notation works fine, but it's a great way to force you to learn about string manipulation.
+It also helps to reinforce what you've learned, so I'll take it :)
 
-var myDog = Object.create(dog);
-var empty = Object.create(null);
+Also if you didn't know about exponential notation, this would be a great approach.
+So this is a good way to see how to solve the problem from a different angle.
 
-// These two lines are equivalent.
-dog.isPrototypeOf(myDog);  // native function returns true
-isPrototypeOf(dog, myDog); // your function does the same
-
-// These two lines, similarly should return the same thing.
-dog.isPrototypeOf(empty);  // native function returns false
-isPrototypeOf(dog, empty); // your function does the same
-
-// This should work too.
-Object.prototype.isPrototypeOf(myDog);  // native function returns true
-isPrototypeOf(Object.prototype, myDog); // your function does the same
-
-// Also make sure that your function will work for any number of prototype links.
-isPrototypeOf(canine, myDog) // true
-```
-
-Post your solutions here:
-https://github.com/gordonmzhu/beasts/issues/4
-
-Make sure to write tests first!
+Post your solution here:
+https://github.com/gordonmzhu/beasts/issues/7.
