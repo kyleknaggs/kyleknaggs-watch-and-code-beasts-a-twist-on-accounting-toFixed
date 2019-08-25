@@ -43,53 +43,44 @@
   Return value:
   A string that contains the rounded number.
 
-  // Potential value arguments:
-  // 0
-  // Positive Integers: 1, 2,
-  // Negative Integers: -1, -2,
-  // Strings: '1'
-  // Positive Floating Point Numbers: 1.1
-  // Negative Floating Point Numbers: -1.1
-  // Number with binary rounding issues: 1.005
-
-  // Potential precision arguments:
-  // 0
-  // Positive Integers: 1, 2
-  // Strings: '1'
-
   */
 
   // Function Syntax:
   function betterToFixed(value, precision) {
+    // Convert argumets to expected types to avoid potential type conversion issues
     var string = String(value);
-    var positionOfDecimal = string.indexOf(".");
-    var length = string.length;
+    var precisionNumber = Number(precision);
+    var indexOfDecimal = string.indexOf(".");
     var numberOfDecimals = 0;
 
-    // If a decimal exists:
-    if(positionOfDecimal > 0){
-      numberOfDecimals = length - positionOfDecimal - 1;
+    // Will be -1 if decimal does not exist
+    if(indexOfDecimal > 0){
+      numberOfDecimals = string.length - indexOfDecimal - 1;
     }
 
-    // Add 0's to end of number:
-    if (numberOfDecimals < precision) {
-      var number = Number(string);
-      return number.toFixed(precision);
-    }
-
-    // Do not add or remove decimal places from number:
-    if(numberOfDecimals === precision){
+    // Option 1: Do not format string.
+    if (numberOfDecimals === precisionNumber) {
       return string;
     }
 
+    // Option 2: Format string.
+    if (numberOfDecimals < precisionNumber) {
+      var number = Number(string);
+      return number.toFixed(precisionNumber);
+    }
+
+    // Option 3: Round number then format string.
     var numberToRound = Number(string);
 
     // Move decimal up:
     if(numberOfDecimals > 1){
-      var beforeDecimal = string.slice(0, positionOfDecimal) + string.slice(positionOfDecimal + 1, length - 1);
-      var afterDecimal = string.slice(length - 1);
-      var modifiedString = beforeDecimal + "." + afterDecimal;
-      numberToRound = Number(modifiedString);
+      var indexAfterModifiedDecimal = indexOfDecimal + precisionNumber + 1;
+      var beforeDecimal =
+        string.slice(0, indexOfDecimal)
+        + string.slice(indexOfDecimal + 1, indexAfterModifiedDecimal);
+      var afterDecimal = string.slice(indexAfterModifiedDecimal);
+      var stringToRound = beforeDecimal + "." + afterDecimal;
+      numberToRound = Number(stringToRound);
     }
 
     var roundedNumber = Math.round(numberToRound);
@@ -97,68 +88,56 @@
 
     // Move decimal back:
     if(numberOfDecimals > 1){
-      var positionsToMove = length - positionOfDecimal - 2;
-      roundedResult = roundedNumber / Math.pow(10,positionsToMove);
+      roundedResult = roundedNumber / Math.pow(10, precisionNumber);
     }
 
-    // Convert number to string and format where necessary
-    var result = roundedResult.toFixed(precision);
-    return result;
+    // Convert to string and add 0's where necessary:
+    // Be careful, can conceal unexpected rounding issues.
+    return roundedResult.toFixed(precisionNumber);
   }
 
   tests({
-    // If no calculations, make sure it handles the value properly:
-    "1) If number of decimals in value === precision, it should return String(value).": function () {
-      eq(betterToFixed(1, 0), "1");
+    // Option 1: If numberOfDecimals === precision:
+    "1) If numberOfDecimals === precision, it should return String(value).": function () {
       eq(betterToFixed(1.5, 1), "1.5");
-      eq(betterToFixed(1.55, 2), "1.55");
     },
-    // If no rounding, make sure it formats string properly
-    "2) If number of decimals in value < precision, it should return the String(number) with precision number of decimal places.": function () {
-      eq(betterToFixed(1, 1), "1.0");
+    // Option 2: If numberOfDecimals < precision:
+    "2) If numberOfDecimals < precision, it should return String(number) with precision number of decimal places.": function () {
       eq(betterToFixed(1.5, 2), "1.50");
-      eq(betterToFixed(1.5, 3), "1.500");
-      eq(betterToFixed(1.55, 3), "1.550");
-      eq(betterToFixed(1.55, 4), "1.5500");
     },
-    // If rounding && but calculations && numberOfDecimals <=1, rounding is not an issue:
-    "3) If precision < numberOfDecimals && numberOfDecimals <= 1, it should return a rounded number with precision number of decimal places.": function () {
-      eq(betterToFixed(1, 0), "1");
+    // Option 3: If precision < numberOfDecimals:
+    "3) If numberOfDecimals === 1, it should return a rounded number with precision number of decimal places.": function () {
       eq(betterToFixed(1.5, 0), "2");
     },
-    // If rounding && calculations && numberOfDecimals > 1, rounding is an issue:
-    "4) If precision < numberOfDecimals && numberOfDecimals > 1, it should return a rounded number with precision number of decimal places.": function () {
-      eq(betterToFixed(1.45, 1), "1.5");
-      eq(betterToFixed(1.455, 2), "1.46");
-      eq(betterToFixed(1.455, 1), "1.5");
-      eq(betterToFixed(1.4555, 2), "1.46");
+    "4a) If numberOfDecimals > 1, && (numberOfDecimals - precision) === 1, it should return a rounded number with precision number of decimal places.": function () {
+      eq(betterToFixed(1.55, 1), "1.6");
     },
-    "5) If value is negative it should round value down as expected when dealing with Math.round().": function () {
-      eq(betterToFixed(-1.5, 0), "-1");
-      eq(betterToFixed(-1.45, 1), "-1.4");
-      eq(betterToFixed(-1.455, 2), "-1.45");
-      eq(betterToFixed(-1.4550, 2), "-1.45");
-      eq(betterToFixed(-1.4551, 2), "-1.46");
+    // If (numberOfDecimals - precision) >= 2 and rounding is not handled properly, toFixed() can conceal internal rounding issues:
+    "4b) If numberOfDecimals > 1, && (numberOfDecimals - precision) === 2, it should return a rounded number with precision number of decimal places.": function () {
+      eq(betterToFixed(1.554, 1), "1.6");
     },
-    "6) If precision or value is a string, it should still round value to precision number of decimal places.": function () {
-      eq(betterToFixed("1.456", "2"), "1.46");
+    "4c) If numberOfDecimals > 1, && (numberOfDecimals - precision) > 2, it should return a rounded number with precision number of decimal places.": function () {
+      eq(betterToFixed(1.5554, 1), "1.6");
     },
-    // Make sure it handles strange numbers
-    "7) If value cannot be accurately stored by JavaScript, it still round as expected.": function () {
+    "5a) If number of decimals in roundedResult < precision, it should add add 0's to the end of roundedResult": function () {
+      eq(betterToFixed(1.501, 2), "1.50");
+    },
+    // No consensues found on how to handle rounding of negative multiples of 0.5 e.g. -1.5 ==> -1, -1.55 ==> -1.5, -1.555 ==> -1.55
+    // Rounding values down keeps function behaviour consistent with Math.round(). e.g. Math.round(-1.5) ==> -1
+    "6a) If value is negative, precision - numberOfDecimals === 1,  && last digit is 5 it should round value down to keep consistent with Math.round().": function () {
+      eq(betterToFixed(-1.55, 1), "-1.5");
+    },
+    "6b) If value is negative, precision - numberOfDecimals > 1, && decimal of numberToRound > 0.5, it should round value up.": function () {
+      eq(betterToFixed(-1.5554, 2), "-1.56");
+    },
+    "7) If precision or value is a string, it should still round value to precision number of decimal places.": function () {
+      eq(betterToFixed("1.555", "2"), "1.56");
+    },
+    // The entire point of rewriting.toFixed()
+    "8) If value cannot be accurately stored by JavaScript, it still round as expected.": function () {
       eq(betterToFixed(0.615, 2), "0.62");
       eq(betterToFixed(1.005, 2), "1.01");
       eq(betterToFixed(10.235, 2), "10.24");
-    },
-    // Keep consistent with toFixed()
-    "8) If precision < 0, it should throw a Range Error.": function () {
-      fail();
-      // try{
-      //   betterToFixed(15, -1);
-      // }catch(e){
-      //   eq(e.name, "RangeError");
-      //   eq(e.message, "toFixed() digits argument must be between 0 and 10");
-      // }
     }
-
   });
 </script>
