@@ -133,7 +133,7 @@
     "7) If precision or value is a string, it should still round value to precision number of decimal places.": function () {
       eq(betterToFixed("1.555", "2"), "1.56");
     },
-    // The entire point of rewriting.toFixed()
+    // The entire point of rewriting the toFixed() method.
     "8) If value cannot be accurately stored by JavaScript, it still round as expected.": function () {
       eq(betterToFixed(0.615, 2), "0.62");
       eq(betterToFixed(1.005, 2), "1.01");
