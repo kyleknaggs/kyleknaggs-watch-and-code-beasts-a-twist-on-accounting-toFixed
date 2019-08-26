@@ -48,64 +48,79 @@
   // Function Syntax:
   function betterToFixed(value, precision) {
     // Convert arguments to expected types to avoid potential type conversion issues
-    var string = String(value);
+    var original = String(value);
     var precisionNumber = Number(precision);
-    var indexOfDecimal = string.indexOf(".");
-    var numberOfDecimals = 0;
+    var indexOfDecimalInOriginal = original.indexOf(".");
+    var decimalsInOriginal = 0;
 
-    // Will be -1 if decimal does not exist
-    if(indexOfDecimal > 0){
-      numberOfDecimals = string.length - indexOfDecimal - 1;
+    // Will be -1 if decimal does not exist:
+    if(indexOfDecimalInOriginal > 0){
+      decimalsInOriginal = original.length - indexOfDecimalInOriginal - 1;
     }
 
-    // Option 1: Do not format string.
-    if (numberOfDecimals === precisionNumber) {
-      return string;
+    var beforePadding = original;
+    var numberOfZerosToPad = precision - decimalsInOriginal;
+
+    // Perform calculations:
+    if(decimalsInOriginal > precision){
+      var toRound = Number(original);
+
+      // Move decimal up:
+      if (decimalsInOriginal > 1) {
+        var indexOfDecimalInStringToRound = indexOfDecimalInOriginal + precisionNumber + 1;
+        var beforeDecimal =
+          original.slice(0, indexOfDecimalInOriginal)
+          + original.slice(indexOfDecimalInOriginal + 1, indexOfDecimalInStringToRound);
+        var afterDecimal = original.slice(indexOfDecimalInStringToRound);
+        var stringToRound = beforeDecimal + "." + afterDecimal;
+        toRound = Number(stringToRound);
+      }
+
+      // Round:
+      var rounded = Math.round(toRound);
+      var roundedResult = rounded;
+
+      // Move decimal back:
+      if (decimalsInOriginal > 1) {
+        roundedResult = rounded / Math.pow(10, precisionNumber);
+      }
+
+      beforePadding = String(roundedResult);
+
+      // Calculate numbersOfZeroToPad:
+      var indexOfDecimalInBeforePadding = beforePadding.indexOf('.');
+      var decimalsInBeforePadding = 0;
+
+      // Will be -1 if decimal does not exist:
+      if(indexOfDecimalInBeforePadding > 0){
+        decimalsInBeforePadding = beforePadding.length - indexOfDecimalInBeforePadding - 1;
+      }
+
+      numberOfZerosToPad = precision - decimalsInBeforePadding;
+
     }
 
-    // Option 2: Format string.
-    if (numberOfDecimals < precisionNumber) {
-      var number = Number(string);
-      return number.toFixed(precisionNumber);
+    // Pad string if necessary:
+    var zerosToPad = [];
+
+    for (var i = 0; i < numberOfZerosToPad; i++) {
+      zerosToPad[i] = '0';
     }
 
-    // Option 3: Round number then format string.
-    var numberToRound = Number(string);
+    return beforePadding + zerosToPad.join('');
 
-    // Move decimal up:
-    if(numberOfDecimals > 1){
-      var indexAfterModifiedDecimal = indexOfDecimal + precisionNumber + 1;
-      var beforeDecimal =
-        string.slice(0, indexOfDecimal)
-        + string.slice(indexOfDecimal + 1, indexAfterModifiedDecimal);
-      var afterDecimal = string.slice(indexAfterModifiedDecimal);
-      var stringToRound = beforeDecimal + "." + afterDecimal;
-      numberToRound = Number(stringToRound);
-    }
-
-    var roundedNumber = Math.round(numberToRound);
-    var roundedResult = roundedNumber;
-
-    // Move decimal back:
-    if(numberOfDecimals > 1){
-      roundedResult = roundedNumber / Math.pow(10, precisionNumber);
-    }
-
-    // Convert to string and add 0's where necessary:
-    // Be careful, can conceal unexpected rounding issues.
-    return roundedResult.toFixed(precisionNumber);
   }
 
   tests({
-    // Option 1: If numberOfDecimals === precision:
+    // Option 1: If numberOfDecimals === precisionNumber:
     "1) If numberOfDecimals === precision, it should return String(value).": function () {
       eq(betterToFixed(1.5, 1), "1.5");
     },
-    // Option 2: If numberOfDecimals < precision:
+    // Option 2: If numberOfDecimals < precisionNumber:
     "2) If numberOfDecimals < precision, it should return String(value) and pad end of result with 0's when necessary.": function () {
       eq(betterToFixed(1.5, 2), "1.50");
     },
-    // Option 3: If precision < numberOfDecimals:
+    // Option 3: If numberOfDecimals > precisionNumber:
     // Do not manipulate string:
     "3) If numberOfDecimals === 1, it should round as expected.": function () {
       eq(betterToFixed(1.5, 0), "2");
@@ -136,7 +151,7 @@
       eq(betterToFixed("1.555", "2"), "1.56");
     },
     // The entire point of rewriting the toFixed() method.
-    "8) It should fix rounding errors on numbers that cannot be accurately stored by JavaScript.": function () {
+    "8) It should fix errors when rounding numbers that cannot be accurately stored by JavaScript.": function () {
       eq(betterToFixed(0.615, 2), "0.62");
       eq(betterToFixed(1.005, 2), "1.01");
       eq(betterToFixed(10.235, 2), "10.24");
