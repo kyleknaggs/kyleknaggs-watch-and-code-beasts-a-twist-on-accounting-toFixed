@@ -58,8 +58,13 @@
       decimalsInOriginal = original.length - indexOfDecimalInOriginal - 1;
     }
 
+    var numberOfZerosToPad = 0;
+
+    if(precision > decimalsInOriginal){
+      numberOfZerosToPad = precision - decimalsInOriginal;
+    }
+
     var beforePadding = original;
-    var numberOfZerosToPad = precision - decimalsInOriginal;
 
     // Perform calculations:
     if(decimalsInOriginal > precision){
@@ -88,8 +93,8 @@
       beforePadding = String(roundedResult);
 
       // Calculate numbersOfZeroToPad:
-      var indexOfDecimalInBeforePadding = beforePadding.indexOf('.');
       var decimalsInBeforePadding = 0;
+      var indexOfDecimalInBeforePadding = beforePadding.indexOf('.');
 
       // Will be -1 if decimal does not exist:
       if(indexOfDecimalInBeforePadding > 0){
@@ -101,13 +106,15 @@
     }
 
     // Pad string if necessary:
-    var zerosToPad = [];
+    var listOfZerosToPad = [];
 
     for (var i = 0; i < numberOfZerosToPad; i++) {
-      zerosToPad[i] = '0';
+      listOfZerosToPad[i] = '0';
     }
 
-    return beforePadding + zerosToPad.join('');
+    var zerosToPad = listOfZerosToPad.join('');
+    var result = beforePadding + zerosToPad;
+    return result;
 
   }
 
@@ -136,7 +143,7 @@
     },
     // Stress test rounding functionality:
     "5) If numberOfDecimals === 10 && precision === 2, it should rounded as expected.": function () {
-      eq(betterToFixed(1.55500001, 2), "1.56");
+      eq(betterToFixed(15.55500001, 2), "15.56");
     },
     // Pad value with 0's when necessary:
     "6) If number of decimals in rounded < precision, it should pad rounded with 0's.": function () {
