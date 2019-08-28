@@ -81,13 +81,24 @@
         toRound = Number(stringToRound);
       }
 
-      // Round:
+      // Convert to absolute value to ensure values are rounded symmetrically:
+      var isNegative = original.includes("-");
+
+      if(isNegative){
+        toRound = Math.abs(toRound);
+      }
+
       var rounded = Math.round(toRound);
       var roundedResult = rounded;
 
       // Move decimal back:
       if (decimalsInOriginal > 1) {
         roundedResult = rounded / Math.pow(10, precisionNumber);
+      }
+
+      // Reset to negative value where relevent:
+      if(isNegative){
+        roundedResult = roundedResult * -1;
       }
 
       beforePadding = String(roundedResult);
@@ -149,13 +160,15 @@
     "6) If number of decimals in rounded < precision, it should pad rounded with 0's.": function () {
       eq(betterToFixed(1.501, 2), "1.50");
     },
-    // No consensues found on how to handle rounding of negative multiples of 0.5 e.g. -1.5 ==> -1, -1.55 ==> -1.5, -1.555 ==> -1.55
-    // Rounding values down keeps function behaviour consistent with Math.round(). e.g. Math.round(-1.5) ==> -1
-    "7a) If numberOfDecimals > precision, value is negative && value is multiple of 0.5, it should round value down.": function () {
-      eq(betterToFixed(-1.5, 0), "-1");
-    },
-    "7b) If numberOfDecimals > precision, value is negative && decimal in toRound > 0.5, it should round value up.": function () {
-      eq(betterToFixed(-1.5554, 2), "-1.56");
+    // (1) Accounting JS: toFixed(-1.5,0) ==> "-1" (2) Gordon's betterToFixed(-1.5,0) ==> "-1" (3) Math.round(-1.5) ==> -1
+    // I have not found overwhelming consensus on how to handle the rounding of negative values with a last digit of 5.
+    // Accounting JS, Gordon's betterToFixed() and Math.round() all apply the "Round half up method"
+    // However, according to a Wikipedia article on the subject the "Round half away from zero" is also known as "commercial rounding"
+    // It treats positive and negative values symmetrically, is free of overall positive/negative bias and is often used for currency conversions and price roundings.
+    // The lack of bias and use of this method when doing currency transactions influenced my decision to use this method in my betterToFixed() function.
+    // https://en.wikipedia.org/wiki/Rounding#Types_of_rounding
+    "7a) If numberOfDecimals > precision && value is negative it should round values away from zero.": function () {
+      eq(betterToFixed(-1.5555, 2), "-1.56");
     },
     "8) If value or precision is a string, it should convert types and round as expected.": function () {
       eq(betterToFixed("1.555", "2"), "1.56");
